@@ -16,10 +16,13 @@ def calculate_accuracy(prediction_img, actual_img):
     accuracy = (correct_predictions / total_pixels) * 100
     return accuracy
 
+imageFileNum = input("Enter the number of model to compare: ")
+processedTyphoon = input("Enter the number of the typhoon data: ")
+
 # Read the images
-ca_img = cv2.imread('images_Reg_CA_model\Reg_CA_Model_1.png')
-rfa_img = cv2.imread('images_Hybrid_Model\Hybrid_Model_RFA_1.png')
-actual_img = cv2.imread('images_processed_typhoon\processed_storm_track_2.png')
+ca_img = cv2.imread(f'images_Reg_CA_model\Reg_CA_Model_{imageFileNum}.png')
+rfa_img = cv2.imread(f'images_Hybrid_Model\Hybrid_Model_RFA_{imageFileNum}.png')
+actual_img = cv2.imread(f'images_processed_typhoon\processed_storm_track_{processedTyphoon}.png')
 
 # Convert images to RGB for Matplotlib
 ca_img = cv2.cvtColor(ca_img, cv2.COLOR_BGR2RGB)
