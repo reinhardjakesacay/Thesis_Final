@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Load the original image
-image_path = 'images_typhoon\storm_track.png'
+image_path = 'images_typhoon\storm_track1.png'
 original_img = cv2.imread(image_path)
 
 # Convert to HSV color space for color-based segmentation
@@ -43,7 +43,7 @@ result_img = np.where(resized_mask[..., None] == 255, (128, 128, 128), blue_back
 folder_path = 'images_processed_typhoon'  # This assumes the folder is in the same directory as your script
 
 # Generate a unique filename for saving the image
-base_filename = 'processed_storm_track.png'
+base_filename = 'processed_storm_track_1.png'
 output_path = os.path.join(folder_path, base_filename)  # Join folder path and base filename
 counter = 1
 

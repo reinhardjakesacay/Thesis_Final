@@ -95,7 +95,7 @@ for step in range(steps):
 folder_path = 'images_Reg_CA_model'  # Change this to your desired folder path
 
 # Generate a unique filename for saving the plot
-base_filename = 'Reg_CA_Model.png'
+base_filename = 'Reg_CA_Model_1.png'
 output_path = os.path.join(folder_path, base_filename)
 counter = 1
 

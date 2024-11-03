@@ -96,7 +96,7 @@ for step in range(steps):
 folder_path = 'images_Hybrid_Model'  # Change this to your desired folder path
 
 # Generate a unique filename for saving the plot
-base_filename = 'Hybrid_Model_RFA.png'
+base_filename = 'Hybrid_Model_RFA_1.png'
 output_path = os.path.join(folder_path, base_filename)
 counter = 1
 

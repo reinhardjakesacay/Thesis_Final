@@ -17,9 +17,9 @@ def calculate_accuracy(prediction_img, actual_img):
     return accuracy
 
 # Read the images
-ca_img = cv2.imread('images_Reg_CA_model\Reg_CA_Model.png')
-rfa_img = cv2.imread('images_Hybrid_Model\Hybrid_Model_RFA.png')
-actual_img = cv2.imread('images_processed_typhoon\processed_storm_track_1.png')
+ca_img = cv2.imread('images_Reg_CA_model\Reg_CA_Model_1.png')
+rfa_img = cv2.imread('images_Hybrid_Model\Hybrid_Model_RFA_1.png')
+actual_img = cv2.imread('images_processed_typhoon\processed_storm_track_2.png')
 
 # Convert images to RGB for Matplotlib
 ca_img = cv2.cvtColor(ca_img, cv2.COLOR_BGR2RGB)
@@ -71,17 +71,20 @@ plt.text(10, 60, f"More Accurate Model: {more_accurate}", color='white', fontsiz
 # Define the folder path where the plot will be saved
 folder_path = 'images_comparison_result'  # Change this to your desired folder path
 
+# Ensure the folder exists; if not, create it
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
 # Generate a unique filename for saving the plot
-base_filename = 'comparison_result.png'
+base_filename = 'comparison_result_1.png'
 output_path = os.path.join(folder_path, base_filename)
 counter = 1
 
 # Check if the file already exists and generate a new filename if necessary
 while os.path.exists(output_path):
-    output_path = f'comparison_plot_{counter}.png'
+    output_path = os.path.join(folder_path, f'comparison_result_{counter}.png')  # Include folder_path here
     counter += 1
 
 # Save the plot to a file
 plt.savefig(output_path, bbox_inches='tight', dpi=300)  # Save with tight bounding box and high resolution
-
 plt.show()
