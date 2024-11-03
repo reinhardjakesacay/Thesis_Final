@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -91,6 +92,20 @@ for step in range(steps):
     ax.axis('off')
     plt.pause(0.1)
 
+# Define the folder path where the image will be saved
+folder_path = 'images_Hybrid_Model'  # Change this to your desired folder path
+
+# Generate a unique filename for saving the plot
+base_filename = 'Hybrid_Model_RFA.png'
+output_path = os.path.join(folder_path, base_filename)
+counter = 1
+
+# Check if the file already exists and generate a new filename if necessary
+while os.path.exists(output_path):
+    output_path = os.path.join(folder_path, f'Hybrid_Model_RFA_{counter}.png')
+    counter += 1
+
 # Save the final picture
-plt.savefig('Hybrid_Model_RFA.png', bbox_inches='tight', pad_inches=0)
+plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
 plt.show()
+

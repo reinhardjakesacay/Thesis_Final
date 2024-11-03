@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -90,6 +91,19 @@ for step in range(steps):
 
     plt.pause(0.1)
 
+# Define the folder path where the image will be saved
+folder_path = 'images_Reg_CA_model'  # Change this to your desired folder path
+
+# Generate a unique filename for saving the plot
+base_filename = 'Reg_CA_Model.png'
+output_path = os.path.join(folder_path, base_filename)
+counter = 1
+
+# Check if the file already exists and generate a new filename if necessary
+while os.path.exists(output_path):
+    output_path = os.path.join(folder_path, f'Reg_CA_Model_{counter}.png')
+    counter += 1
+
 # Save the final picture
-plt.savefig('Reg_CA_Model.png', bbox_inches='tight', pad_inches=0)
+plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
 plt.show()

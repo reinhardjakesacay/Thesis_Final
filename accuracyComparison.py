@@ -17,9 +17,9 @@ def calculate_accuracy(prediction_img, actual_img):
     return accuracy
 
 # Read the images
-ca_img = cv2.imread('Reg_CA_Model.png')
-rfa_img = cv2.imread('Hybrid_Model_RFA.png')
-actual_img = cv2.imread('processed_storm_track_1.png')
+ca_img = cv2.imread('images_Reg_CA_model\Reg_CA_Model.png')
+rfa_img = cv2.imread('images_Hybrid_Model\Hybrid_Model_RFA.png')
+actual_img = cv2.imread('images_processed_typhoon\processed_storm_track_1.png')
 
 # Convert images to RGB for Matplotlib
 ca_img = cv2.cvtColor(ca_img, cv2.COLOR_BGR2RGB)
@@ -68,9 +68,12 @@ plt.text(10, 20, f"CA Accuracy: {ca_accuracy:.2f}%", color='white', fontsize=12)
 plt.text(10, 40, f"CA-RFA Accuracy: {rfa_accuracy:.2f}%", color='white', fontsize=12)
 plt.text(10, 60, f"More Accurate Model: {more_accurate}", color='white', fontsize=12)
 
+# Define the folder path where the plot will be saved
+folder_path = 'images_comparison_result'  # Change this to your desired folder path
+
 # Generate a unique filename for saving the plot
 base_filename = 'comparison_result.png'
-output_path = base_filename
+output_path = os.path.join(folder_path, base_filename)
 counter = 1
 
 # Check if the file already exists and generate a new filename if necessary

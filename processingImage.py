@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Load the original image
-image_path = 'storm_track1.png'
+image_path = 'images_typhoon\storm_track.png'
 original_img = cv2.imread(image_path)
 
 # Convert to HSV color space for color-based segmentation
@@ -39,14 +39,21 @@ blue_background = np.full((200, 200, 3), (0, 0, 255), dtype=np.uint8)  # RGB for
 # Set the storm track areas (where mask is 255) to gray
 result_img = np.where(resized_mask[..., None] == 255, (128, 128, 128), blue_background).astype(np.uint8)
 
+# Define the folder path using a relative path
+folder_path = 'images_processed_typhoon'  # This assumes the folder is in the same directory as your script
+
 # Generate a unique filename for saving the image
 base_filename = 'processed_storm_track.png'
-output_path = base_filename
+output_path = os.path.join(folder_path, base_filename)  # Join folder path and base filename
 counter = 1
+
+# Check if the folder exists; if not, create it
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
 
 # Check if the file already exists and generate a new filename if necessary
 while os.path.exists(output_path):
-    output_path = f'processed_storm_track_{counter}.png'
+    output_path = os.path.join(folder_path, f'processed_storm_track_{counter}.png')
     counter += 1
 
 # Save the final result to a file
