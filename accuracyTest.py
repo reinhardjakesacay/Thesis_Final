@@ -69,6 +69,16 @@ plt.text(10, 20, f"CA Accuracy: {ca_accuracy:.2f}%", color='white', fontsize=12)
 plt.text(10, 40, f"CA-RFA Accuracy: {rfa_accuracy:.2f}%", color='white', fontsize=12)
 plt.text(10, 60, f"More Accurate Model: {more_accurate}", color='white', fontsize=12)
 
+# Create a custom legend
+legend_labels = ['CA Prediction', 'CA-RFA Prediction', 'Actual Storm Track']
+colors = [[255, 50, 50], [255, 255, 50], [50, 255, 50]]
+handles = [plt.Line2D([0], [0], marker='o', color='w', label=label,
+                      markerfacecolor=np.array(color)/255.0, markersize=10)
+           for label, color in zip(legend_labels, colors)]
+
+# Add the legend to the plot
+plt.legend(handles=handles, loc='upper right', fontsize=12)
+
 # Define the folder path where the plot will be saved
 folder_path = 'images_comparison_result'
 if not os.path.exists(folder_path):
