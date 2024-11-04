@@ -71,6 +71,10 @@ def update_weather_with_model(grid, wind_grid, temp_grid, humidity_grid, storm_x
     # Update storm center position randomly
     storm_y = (storm_y - 1) % grid_size
     storm_x = (storm_x + np.random.randint(-3, 4)) % grid_size
+
+    # Restrict storm_x to the range 50 to 150
+    storm_x = max(50, min(150, storm_x))
+
     new_grid[storm_x, storm_y] = 1  
     
     return new_grid, storm_x, storm_y
