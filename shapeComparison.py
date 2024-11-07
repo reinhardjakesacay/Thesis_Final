@@ -13,12 +13,12 @@ def extract_gray_shape(image_path):
 
 # Example dictionary of image paths for the models
 image_paths = {
-    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_23.png",  # Model 1
-    "processed_model": r"images_processed_typhoon/processed_storm_track_1.png",  # Model 2
-    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_23.png"  # Model 3
+    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_7.png",
+    "processed_model": r"images_processed_typhoon/processed_storm_track_1.png",
+    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_7.png"
 }
 
-# Extract gray shape regions from each model image and the original images
+# Extract gray shape regions and original images
 gray_masks = {}
 original_images = {}
 for name, path in image_paths.items():
@@ -26,7 +26,7 @@ for name, path in image_paths.items():
     gray_masks[name] = mask
     original_images[name] = image
 
-# Resize to base shape (common shape for comparison)
+# Resize masks to a common shape (base_shape)
 base_shape = (512, 512)
 for name in gray_masks:
     if gray_masks[name].shape != base_shape:
@@ -60,24 +60,38 @@ for model_name, metrics in similarity_results.items():
     print(f"{model_name}: IoU = {metrics['IoU']}, Dice Coefficient = {metrics['Dice Coefficient']}")
 
 # Determine which model is closer to the processed typhoon path
-# We choose the model with the highest IoU or Dice coefficient
-best_model = max(similarity_results, key=lambda x: similarity_results[x]['IoU'])  # Or 'Dice Coefficient'
+best_model = max(similarity_results, key=lambda x: similarity_results[x]['IoU'])
 print(f"The model closest to the processed typhoon path is: {best_model}")
 
-# Plotting the images and masks
-fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+# Plotting the images and masks with consistent color overlay
+fig, axes = plt.subplots(1, 3, figsize=(10, 4))  # Smaller figure size for compact display
+
+overlay_color = (0, 255, 0)  # Green overlay color for filled shapes
+alpha_value = 0.5  # Consistent alpha for both CA and CA-RFA models
 
 for i, model_name in enumerate(image_paths.keys()):
     ax = axes[i]
     ax.imshow(original_images[model_name])
     
-    # Draw the contours or the mask on the image
+    # Draw filled contours with thicker lines for more visibility
     contours, _ = cv2.findContours(gray_masks[model_name], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    ax.imshow(cv2.drawContours(np.copy(original_images[model_name]), contours, -1, (0, 255, 0), 2), alpha=0.6)
+    filled_image = np.zeros_like(original_images[model_name])
     
-    # Title with similarity score
-    similarity_score = similarity_results.get(model_name, {})
-    ax.set_title(f"{model_name}\nIoU: {similarity_score.get('IoU', 'N/A')}\nDice: {similarity_score.get('Dice Coefficient', 'N/A')}", fontsize=12)
+    # Increase thickness for better visibility
+    cv2.drawContours(filled_image, contours, -1, overlay_color, thickness=cv2.FILLED)  # Filled contour
+    
+    # Optionally apply a dilation to the mask to increase coverage
+    dilated_mask = cv2.dilate(gray_masks[model_name], np.ones((10, 10), np.uint8), iterations=1)
+    cv2.drawContours(filled_image, contours, -1, overlay_color, thickness=cv2.FILLED)
+    ax.imshow(filled_image, alpha=alpha_value)  # Set consistent alpha for both models
+
+    # Title with similarity score if available, skip for processed model
+    if model_name != "processed_model":
+        similarity_score = similarity_results.get(model_name, {})
+        title = f"{model_name}\nIoU: {similarity_score.get('IoU', 'N/A')}\nDice: {similarity_score.get('Dice Coefficient', 'N/A')}"
+    else:
+        title = model_name  # Only show the model name for the processed model
+    ax.set_title(title, fontsize=10)
     ax.axis('off')
 
 plt.tight_layout()
