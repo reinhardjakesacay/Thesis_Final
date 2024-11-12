@@ -15,9 +15,9 @@ def extract_gray_shape(image_path):
 
 # Example dictionary of image paths for the models
 image_paths = {
-    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_2.png",
-    "processed_model": r"images_processed_typhoon/processed_storm_track_2.png",
-    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_1.png"
+    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_3.png",
+    "processed_model": r"images_processed_typhoon/processed_storm_track_1.png",
+    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_3.png"
 }
 
 # Extract gray shape regions and original images
