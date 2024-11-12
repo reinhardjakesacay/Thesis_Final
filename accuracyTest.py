@@ -12,8 +12,8 @@ def calculate_accuracy(prediction_img, actual_img):
     accuracy = (correct_predictions / total_pixels) * 100
     return accuracy
 
-# Initialize Excel file for logging
-excel_file_path = 'model_accuracy_statistics.xlsx'
+# Initialize CSV file for logging
+csv_file_path = 'model_accuracy_statistics.csv'
 
 # Ask for user input
 imageFileNum = input("Enter the number of model to compare: ")
@@ -44,19 +44,13 @@ combined_img = cv2.addWeighted(actual_img, 0.4, overlay_img, 0.6, 0)
 ca_accuracy = calculate_accuracy(ca_img, actual_img)
 rfa_accuracy = calculate_accuracy(rfa_img, actual_img)
 
-# Determine which model is more accurate and allocate points
+# Determine which model is more accurate
 if ca_accuracy > rfa_accuracy:
     more_accurate = "CA"
-    ca_points = 1
-    rfa_points = 0
 elif rfa_accuracy > ca_accuracy:
     more_accurate = "CA-RFA"
-    ca_points = 0
-    rfa_points = 1
 else:
     more_accurate = "Both are equally accurate"
-    ca_points = 0
-    rfa_points = 0
 
 # Display the combined image
 plt.figure(figsize=(10, 10))
@@ -91,23 +85,23 @@ counter = 1
 
 # Check if the file already exists and generate a new filename if necessary
 while os.path.exists(output_path):
-    output_path = os.path.join(folder_path, f'comparison_result_{counter}.png')  # Include folder_path here
+    output_path = os.path.join(folder_path, f'comparison_result_{counter}.png')
     counter += 1
 
 # Save the plot to a file
 plt.savefig(output_path, bbox_inches='tight', dpi=300)
 plt.close()  # Close the plot to free up memory
 
-# Prepare to log results to Excel
+# Prepare data to log accuracy percentages to CSV
 log_data = {
-    'CA Points': [ca_points],
-    'CA-RFA Points': [rfa_points],
+    'CA Accuracy (%)': [ca_accuracy],
+    'CA-RFA Accuracy (%)': [rfa_accuracy],
 }
 
-# Check if the Excel file already exists
-if os.path.exists(excel_file_path):
+# Check if the CSV file already exists
+if os.path.exists(csv_file_path):
     # Load existing data
-    existing_data = pd.read_excel(excel_file_path)
+    existing_data = pd.read_csv(csv_file_path)
     # Append new data
     new_data = pd.DataFrame(log_data)
     updated_data = pd.concat([existing_data, new_data], ignore_index=True)
@@ -115,9 +109,9 @@ else:
     # Create a new DataFrame if the file does not exist
     updated_data = pd.DataFrame(log_data)
 
-# Save updated results to Excel
-updated_data.to_excel(excel_file_path, sheet_name='Accuracy', index=False)
+# Save updated results to CSV
+updated_data.to_csv(csv_file_path, index=False)
 
 print(f"More accurate model: {more_accurate}")
-print("Results saved to", excel_file_path)
+print("Results saved to", csv_file_path)
 print("Image saved to", output_path)
