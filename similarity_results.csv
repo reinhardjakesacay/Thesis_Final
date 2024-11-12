@@ -1,0 +1,5 @@
+CA_IoU,CA_Dice Coefficient,CA-RFA_IoU,CA-RFA_Dice Coefficient
+
+
+0.1427,0.001,0.1186,0.0008
+0.0096,0.0001,0.0578,0.0004

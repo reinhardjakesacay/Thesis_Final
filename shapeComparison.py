@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import csv
 
 # Helper function to extract gray shape region from image (ignores blue background)
 def extract_gray_shape(image_path):
@@ -13,9 +15,9 @@ def extract_gray_shape(image_path):
 
 # Example dictionary of image paths for the models
 image_paths = {
-    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_7.png",
-    "processed_model": r"images_processed_typhoon/processed_storm_track_1.png",
-    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_7.png"
+    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_2.png",
+    "processed_model": r"images_processed_typhoon/processed_storm_track_2.png",
+    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_1.png"
 }
 
 # Extract gray shape regions and original images
@@ -95,4 +97,41 @@ for i, model_name in enumerate(image_paths.keys()):
     ax.axis('off')
 
 plt.tight_layout()
+
+# Define the folder path where the plot will be saved
+folder_path = 'images_similarity_result'  # Change this to your desired folder path
+
+# Ensure the folder exists; if not, create it
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
+# Generate a unique filename for saving the plot
+base_filename = 'similarity_result_1.png'
+output_path = os.path.join(folder_path, base_filename)
+counter = 1
+
+# Check if the file already exists and generate a new filename if necessary
+while os.path.exists(output_path):
+    output_path = os.path.join(folder_path, f'similarity_result_{counter}.png')  # Include folder_path here
+    counter += 1
+
+# Save the plot to a file
+plt.savefig(output_path, bbox_inches='tight', dpi=300)  # Save with tight bounding box and high resolution
+
+    
+# Open the existing similarity_results.csv file and append the results in the required format
+csv_filename = "similarity_results.csv"
+
+with open(csv_filename, mode='a', newline='') as file:
+    writer = csv.writer(file)
+    
+    # Append data in the specified format
+    writer.writerow([
+        similarity_results["CA_model"]["IoU"],
+        similarity_results["CA_model"]["Dice Coefficient"],
+        similarity_results["CA_RFA_model"]["IoU"],
+        similarity_results["CA_RFA_model"]["Dice Coefficient"]
+    ])
+print(f"Similarity results appended to {csv_filename}")
+
 plt.show()
