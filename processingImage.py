@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Load the original image
-image_path = 'images_typhoon\storm_track1.png'
+image_path = 'images_typhoon/storm_track.png'
 original_img = cv2.imread(image_path)
 
 # Convert to HSV color space for color-based segmentation
@@ -39,6 +39,9 @@ blue_background = np.full((200, 200, 3), (0, 0, 255), dtype=np.uint8)  # RGB for
 # Set the storm track areas (where mask is 255) to gray
 result_img = np.where(resized_mask[..., None] == 255, (128, 128, 128), blue_background).astype(np.uint8)
 
+# Resize the result to 462x462 pixels
+result_img_resized = cv2.resize(result_img, (462, 462), interpolation=cv2.INTER_NEAREST)
+
 # Define the folder path using a relative path
 folder_path = 'images_processed_typhoon'  # This assumes the folder is in the same directory as your script
 
@@ -57,12 +60,11 @@ while os.path.exists(output_path):
     counter += 1
 
 # Save the final result to a file
-cv2.imwrite(output_path, cv2.cvtColor(result_img, cv2.COLOR_RGB2BGR))  # Convert back to BGR for saving
-
+cv2.imwrite(output_path, cv2.cvtColor(result_img_resized, cv2.COLOR_RGB2BGR))  # Convert back to BGR for saving
 
 # Plot the final result
 plt.figure(figsize=(6, 6))
-plt.imshow(result_img)
-plt.title('Processed Actual Storm Track')
+plt.imshow(result_img_resized)
+plt.title('Processed Actual Storm Track (462x462)')
 plt.axis('off')
 plt.show()
