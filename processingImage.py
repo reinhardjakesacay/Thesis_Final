@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Load the original image
-image_path = 'images_typhoon/storm_track.png'
+image_path = 'images_typhoon/storm_track1.png'
 original_img = cv2.imread(image_path)
 
 # Convert to HSV color space for color-based segmentation
