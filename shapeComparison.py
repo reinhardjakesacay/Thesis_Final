@@ -13,11 +13,15 @@ def extract_gray_shape(image_path):
     mask = cv2.inRange(hsv_image, lower_gray, upper_gray)
     return mask, image
 
+# Ask for user input
+imageFileNum = input("Enter the number of model to compare: ")
+processedTyphoon = input("Enter the number of the typhoon data: ")
+
 # Example dictionary of image paths for the models
 image_paths = {
-    "CA_RFA_model": r"images_Hybrid_Model/Hybrid_Model_RFA_100.png",
-    "processed_model": r"images_processed_typhoon/processed_storm_track_1.png",
-    "CA_model": r"images_Reg_CA_model/Reg_CA_Model_100.png"
+    "CA_RFA_model": f"images_Hybrid_Model/Hybrid_Model_RFA_{imageFileNum}.png",
+    "processed_model": f"images_processed_typhoon/processed_storm_track_{processedTyphoon}.png",
+    "CA_model": f"images_Reg_CA_model/Reg_CA_Model_{imageFileNum}.png"
 }
 
 # Extract gray shape regions and original images
@@ -120,7 +124,7 @@ plt.savefig(output_path, bbox_inches='tight', dpi=300)  # Save with tight boundi
 
     
 # Open the existing similarity_results.csv file and append the results in the required format
-csv_filename = "similarity_results.csv"
+csv_filename = "similarity_results2.csv"
 
 with open(csv_filename, mode='a', newline='') as file:
     writer = csv.writer(file)
@@ -134,4 +138,4 @@ with open(csv_filename, mode='a', newline='') as file:
     ])
 print(f"Similarity results appended to {csv_filename}")
 
-plt.show()
+#plt.show()
