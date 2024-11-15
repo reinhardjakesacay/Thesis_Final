@@ -13,7 +13,7 @@ def calculate_accuracy(prediction_img, actual_img):
     return accuracy
 
 # Initialize CSV file for logging
-csv_file_path = 'model_accuracy_statistics.csv'
+csv_file_path = 'model_accuracy_statistics2.csv'
 
 # Ask for user input
 imageFileNum = input("Enter the number of model to compare: ")
