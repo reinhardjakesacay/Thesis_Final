@@ -13,16 +13,15 @@ def calculate_accuracy(prediction_img, actual_img):
     return accuracy
 
 # Initialize CSV file for logging
-csv_file_path = 'model_accuracy_statistics2.csv'
+csv_file_path = 'model_accuracy_statistics(trashPilePrediction).csv'
 
 # Ask for user input
 imageFileNum = input("Enter the number of model to compare: ")
-processedTyphoon = input("Enter the number of the typhoon data: ")
 
 # Read the images
-ca_img = cv2.imread(f'images_Reg_CA_model/Reg_CA_Model_{imageFileNum}.png')
-rfa_img = cv2.imread(f'images_Hybrid_Model/Hybrid_Model_RFA_{imageFileNum}.png')
-actual_img = cv2.imread(f'images_processed_typhoon/processed_storm_track_{processedTyphoon}.png')
+ca_img = cv2.imread(f'images_Plastic_CA_model/Plastic_CA_model_{imageFileNum}.png')
+rfa_img = cv2.imread(f'images_Plastic_RFA_model/Plastic_RFA_model_{imageFileNum}.png')
+actual_img = cv2.imread(f'images_processed_trash/processedTrashImg.png')
 
 # Convert images to RGB for Matplotlib
 ca_img = cv2.cvtColor(ca_img, cv2.COLOR_BGR2RGB)
