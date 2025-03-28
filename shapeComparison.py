@@ -3,43 +3,45 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import csv
+import scipy.stats as stats
+import pandas as pd
 
-# Helper function to extract gray shape region from image (ignores blue background)
 def extract_gray_shape(image_path):
+    """
+    Extract gray shape region from an image, ignoring blue background.
+    
+    Args:
+        image_path (str): Path to the input image
+    
+    Returns:
+        tuple: Mask of gray shape and original image
+    """
     image = cv2.imread(image_path)
+    if image is None:
+        print(f"Warning: Could not read image {image_path}")
+        return None, None
+    
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     lower_gray = np.array([0, 0, 50])
     upper_gray = np.array([180, 50, 200])
     mask = cv2.inRange(hsv_image, lower_gray, upper_gray)
     return mask, image
 
-# Ask for user input
-imageFileNum = input("Enter the number of model to compare: ")
-
-
-# Example dictionary of image paths for the models
-image_paths = {
-    "CA_RFA_model": f"images_Hybrid_Model/Hybrid_Model_RFA_{imageFileNum}.png",
-    "processed_model": f"images_processed_typhoon/processed_storm_track_1.png",
-    "CA_model": f"images_Reg_CA_model/Reg_CA_Model_{imageFileNum}.png"
-}
-
-# Extract gray shape regions and original images
-gray_masks = {}
-original_images = {}
-for name, path in image_paths.items():
-    mask, image = extract_gray_shape(path)
-    gray_masks[name] = mask
-    original_images[name] = image
-
-# Resize masks to a common shape (base_shape)
-base_shape = (512, 512)
-for name in gray_masks:
-    if gray_masks[name].shape != base_shape:
-        gray_masks[name] = cv2.resize(gray_masks[name], (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
-
-# Function to calculate IoU and Dice similarity
 def calculate_iou_and_dice(mask1, mask2):
+    """
+    Calculate Intersection over Union (IoU) and Dice Coefficient.
+    
+    Args:
+        mask1 (numpy.ndarray): First binary mask
+        mask2 (numpy.ndarray): Second binary mask
+    
+    Returns:
+        tuple: IoU and Dice Coefficient
+    """
+    # Ensure masks are binary
+    mask1 = mask1 > 0
+    mask2 = mask2 > 0
+    
     # Intersection and union for IoU
     intersection = np.logical_and(mask1, mask2)
     union = np.logical_or(mask1, mask2)
@@ -50,92 +52,250 @@ def calculate_iou_and_dice(mask1, mask2):
     
     return iou, dice
 
-# Compare each model (CA_RFA_model, CA_model) to the processed model
-similarity_results = {}
-for model_name, mask in gray_masks.items():
-    if model_name != "processed_model":  # Compare only the first two models to the processed model
-        iou, dice = calculate_iou_and_dice(gray_masks["processed_model"], mask)
-        similarity_results[model_name] = {
-            "IoU": round(iou, 4),
-            "Dice Coefficient": round(dice, 4)
-        }
-
-# Print the similarity results
-print("Similarity Results:")
-for model_name, metrics in similarity_results.items():
-    print(f"{model_name}: IoU = {metrics['IoU']}, Dice Coefficient = {metrics['Dice Coefficient']}")
-
-# Determine which model is closer to the processed typhoon path
-best_model = max(similarity_results, key=lambda x: similarity_results[x]['IoU'])
-print(f"The model closest to the processed typhoon path is: {best_model}")
-
-# Plotting the images and masks with consistent color overlay
-fig, axes = plt.subplots(1, 3, figsize=(10, 4))  # Smaller figure size for compact display
-
-overlay_color = (0, 255, 0)  # Green overlay color for filled shapes
-alpha_value = 0.5  # Consistent alpha for both CA and CA-RFA models
-
-for i, model_name in enumerate(image_paths.keys()):
-    ax = axes[i]
-    ax.imshow(original_images[model_name])
+def compute_model_differences(processed_folder, ca_folder, ca_rfa_folder, output_folder='batch_difference_results'):
+    """
+    Compute and analyze differences between model comparisons.
     
-    # Draw filled contours with thicker lines for more visibility
-    contours, _ = cv2.findContours(gray_masks[model_name], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    filled_image = np.zeros_like(original_images[model_name])
+    Args:
+        processed_folder (str): Path to processed model images
+        ca_folder (str): Path to CA model images
+        ca_rfa_folder (str): Path to CA-RFA model images
+        output_folder (str, optional): Folder to save results
     
-    # Increase thickness for better visibility
-    cv2.drawContours(filled_image, contours, -1, overlay_color, thickness=cv2.FILLED)  # Filled contour
+    Returns:
+        dict: Comprehensive difference analysis results
+    """
+    # Create output folders if they don't exist
+    os.makedirs(output_folder, exist_ok=True)
     
-    # Optionally apply a dilation to the mask to increase coverage
-    dilated_mask = cv2.dilate(gray_masks[model_name], np.ones((10, 10), np.uint8), iterations=1)
-    cv2.drawContours(filled_image, contours, -1, overlay_color, thickness=cv2.FILLED)
-    ax.imshow(filled_image, alpha=alpha_value)  # Set consistent alpha for both models
-
-    # Title with similarity score if available, skip for processed model
-    if model_name != "processed_model":
-        similarity_score = similarity_results.get(model_name, {})
-        title = f"{model_name}\nIoU: {similarity_score.get('IoU', 'N/A')}\nDice: {similarity_score.get('Dice Coefficient', 'N/A')}"
-    else:
-        title = model_name  # Only show the model name for the processed model
-    ax.set_title(title, fontsize=10)
-    ax.axis('off')
-
-plt.tight_layout()
-
-# Define the folder path where the plot will be saved
-folder_path = 'images_similarity_result'  # Change this to your desired folder path
-
-# Ensure the folder exists; if not, create it
-if not os.path.exists(folder_path):
-    os.makedirs(folder_path)
-
-# Generate a unique filename for saving the plot
-base_filename = 'similarity_result_1.png'
-output_path = os.path.join(folder_path, base_filename)
-counter = 1
-
-# Check if the file already exists and generate a new filename if necessary
-while os.path.exists(output_path):
-    output_path = os.path.join(folder_path, f'similarity_result_{counter}.png')  # Include folder_path here
-    counter += 1
-
-# Save the plot to a file
-plt.savefig(output_path, bbox_inches='tight', dpi=300)  # Save with tight bounding box and high resolution
-
+    # Get list of image files
+    processed_images = sorted([f for f in os.listdir(processed_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
+    ca_images = sorted([f for f in os.listdir(ca_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
+    ca_rfa_images = sorted([f for f in os.listdir(ca_rfa_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
     
-# Open the existing similarity_results.csv file and append the results in the required format
-csv_filename = "sampleIoUandDice.csv"
-
-with open(csv_filename, mode='a', newline='') as file:
-    writer = csv.writer(file)
+    # Ensure we have matching number of images
+    min_images = min(len(processed_images), len(ca_images), len(ca_rfa_images))
     
-    # Append data in the specified format
-    writer.writerow([
-        similarity_results["CA_model"]["IoU"],
-        similarity_results["CA_model"]["Dice Coefficient"],
-        similarity_results["CA_RFA_model"]["IoU"],
-        similarity_results["CA_RFA_model"]["Dice Coefficient"]
-    ])
-print(f"Similarity results appended to {csv_filename}")
+    # Initialize storage for metrics
+    ca_iou_values = []
+    ca_dice_values = []
+    ca_rfa_iou_values = []
+    ca_rfa_dice_values = []
+    
+    # Compute metrics for each image
+    for i in range(min_images):
+        # Construct full image paths
+        processed_path = os.path.join(processed_folder, processed_images[i])
+        ca_path = os.path.join(ca_folder, ca_images[i])
+        ca_rfa_path = os.path.join(ca_rfa_folder, ca_rfa_images[i])
+        
+        # Extract masks
+        processed_mask, _ = extract_gray_shape(processed_path)
+        ca_mask, _ = extract_gray_shape(ca_path)
+        ca_rfa_mask, _ = extract_gray_shape(ca_rfa_path)
+        
+        # Skip if any mask is None
+        if processed_mask is None or ca_mask is None or ca_rfa_mask is None:
+            continue
+        
+        # Resize masks to a common shape
+        base_shape = (512, 512)
+        processed_mask = cv2.resize(processed_mask, (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
+        ca_mask = cv2.resize(ca_mask, (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
+        ca_rfa_mask = cv2.resize(ca_rfa_mask, (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
+        
+        # Calculate similarities
+        ca_iou, ca_dice = calculate_iou_and_dice(processed_mask, ca_mask)
+        ca_rfa_iou, ca_rfa_dice = calculate_iou_and_dice(processed_mask, ca_rfa_mask)
+        
+        # Store values
+        ca_iou_values.append(ca_iou)
+        ca_dice_values.append(ca_dice)
+        ca_rfa_iou_values.append(ca_rfa_iou)
+        ca_rfa_dice_values.append(ca_rfa_dice)
+    
+    # Compute comprehensive difference analysis
+    difference_analysis = {
+        # Mean (Average) Metrics
+        'mean_ca_iou': np.mean(ca_iou_values),
+        'mean_ca_dice': np.mean(ca_dice_values),
+        'mean_ca_rfa_iou': np.mean(ca_rfa_iou_values),
+        'mean_ca_rfa_dice': np.mean(ca_rfa_dice_values),
+        
+        # Absolute Difference Between Models
+        'abs_mean_iou_difference': np.abs(np.mean(ca_iou_values) - np.mean(ca_rfa_iou_values)),
+        'abs_mean_dice_difference': np.abs(np.mean(ca_dice_values) - np.mean(ca_rfa_dice_values)),
+        
+        # Variance of Metrics
+        'variance_ca_iou': np.var(ca_iou_values),
+        'variance_ca_rfa_iou': np.var(ca_rfa_iou_values),
+        
+        # Statistical Tests
+        'iou_ttest': stats.ttest_ind(ca_iou_values, ca_rfa_iou_values),
+        'dice_ttest': stats.ttest_ind(ca_dice_values, ca_rfa_dice_values),
+        
+        # Full Metrics for Detailed Analysis
+        'ca_iou_values': ca_iou_values,
+        'ca_dice_values': ca_dice_values,
+        'ca_rfa_iou_values': ca_rfa_iou_values,
+        'ca_rfa_dice_values': ca_rfa_dice_values
+    }
+    
+    # Visualization of Differences
+    plt.figure(figsize=(12, 5))
+    
+    # IoU Comparison
+    plt.subplot(1, 2, 1)
+    plt.boxplot([ca_iou_values, ca_rfa_iou_values], labels=['CA Model', 'CA-RFA Model'])
+    plt.title('IoU Distribution Comparison')
+    plt.ylabel('Intersection over Union (IoU)')
+    
+    # Dice Coefficient Comparison
+    plt.subplot(1, 2, 2)
+    plt.boxplot([ca_dice_values, ca_rfa_dice_values], labels=['CA Model', 'CA-RFA Model'])
+    plt.title('Dice Coefficient Distribution Comparison')
+    plt.ylabel('Dice Coefficient')
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_folder, 'model_comparison_boxplot.png'))
+    plt.close()
+    
+    # Save detailed results to CSV
+    results_df = pd.DataFrame({
+        'CA Model IoU': ca_iou_values,
+        'CA Model Dice': ca_dice_values,
+        'CA-RFA Model IoU': ca_rfa_iou_values,
+        'CA-RFA Model Dice': ca_rfa_dice_values
+    })
+    results_df.to_csv(os.path.join(output_folder, 'model_difference_analysis.csv'), index=False)
+    
+    # Print summary to console
+    print("\nModel Comparison Summary:")
+    print(f"Average CA Model IoU: {difference_analysis['mean_ca_iou']:.4f}")
+    print(f"Average CA-RFA Model IoU: {difference_analysis['mean_ca_rfa_iou']:.4f}")
+    print(f"Absolute IoU Difference: {difference_analysis['abs_mean_iou_difference']:.4f}")
+    print(f"T-Test for IoU: t-statistic = {difference_analysis['iou_ttest'].statistic:.4f}, p-value = {difference_analysis['iou_ttest'].pvalue:.4f}")
+    
+    return difference_analysis
 
-#plt.show()
+def batch_compare_models(processed_folder, ca_folder, ca_rfa_folder, output_folder='batch_similarity_results'):
+    """
+    Compare batch of images from different model folders.
+    
+    Args:
+        processed_folder (str): Path to processed model images
+        ca_folder (str): Path to CA model images
+        ca_rfa_folder (str): Path to CA-RFA model images
+        output_folder (str, optional): Folder to save results
+    """
+    # Create output folders if they don't exist
+    os.makedirs(output_folder, exist_ok=True)
+    os.makedirs(os.path.join(output_folder, 'plots'), exist_ok=True)
+    
+    # Get list of image files
+    processed_images = sorted([f for f in os.listdir(processed_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
+    ca_images = sorted([f for f in os.listdir(ca_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
+    ca_rfa_images = sorted([f for f in os.listdir(ca_rfa_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
+    
+    # Ensure we have matching number of images
+    min_images = min(len(processed_images), len(ca_images), len(ca_rfa_images))
+    
+    # Prepare CSV for results
+    csv_filename = os.path.join(output_folder, 'batch_similarity_results.csv')
+    with open(csv_filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Image', 'CA Model IoU', 'CA Model Dice', 'CA-RFA Model IoU', 'CA-RFA Model Dice'])
+    
+    # Batch comparison
+    for i in range(min_images):
+        # Construct full image paths
+        processed_path = os.path.join(processed_folder, processed_images[i])
+        ca_path = os.path.join(ca_folder, ca_images[i])
+        ca_rfa_path = os.path.join(ca_rfa_folder, ca_rfa_images[i])
+        
+        # Extract masks
+        processed_mask, processed_image = extract_gray_shape(processed_path)
+        ca_mask, ca_image = extract_gray_shape(ca_path)
+        ca_rfa_mask, ca_rfa_image = extract_gray_shape(ca_rfa_path)
+        
+        # Skip if any mask is None
+        if processed_mask is None or ca_mask is None or ca_rfa_mask is None:
+            print(f"Skipping image set {i+1} due to mask extraction failure")
+            continue
+        
+        # Resize masks to a common shape
+        base_shape = (512, 512)
+        processed_mask = cv2.resize(processed_mask, (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
+        ca_mask = cv2.resize(ca_mask, (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
+        ca_rfa_mask = cv2.resize(ca_rfa_mask, (base_shape[1], base_shape[0]), interpolation=cv2.INTER_NEAREST)
+        
+        # Calculate similarities
+        ca_iou, ca_dice = calculate_iou_and_dice(processed_mask, ca_mask)
+        ca_rfa_iou, ca_rfa_dice = calculate_iou_and_dice(processed_mask, ca_rfa_mask)
+        
+        # Plotting
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        
+        overlay_color = (0, 255, 0)  # Green overlay
+        alpha_value = 0.5
+        
+        # Plot processed model
+        axes[0].imshow(processed_image)
+        processed_contours, _ = cv2.findContours(processed_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        processed_filled = np.zeros_like(processed_image)
+        cv2.drawContours(processed_filled, processed_contours, -1, overlay_color, thickness=cv2.FILLED)
+        axes[0].imshow(processed_filled, alpha=alpha_value)
+        axes[0].set_title(f"Processed Model\n{processed_images[i]}")
+        axes[0].axis('off')
+        
+        # Plot CA model
+        axes[1].imshow(ca_image)
+        ca_contours, _ = cv2.findContours(ca_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ca_filled = np.zeros_like(ca_image)
+        cv2.drawContours(ca_filled, ca_contours, -1, overlay_color, thickness=cv2.FILLED)
+        axes[1].imshow(ca_filled, alpha=alpha_value)
+        axes[1].set_title(f"CA Model\nIoU: {ca_iou:.4f}\nDice: {ca_dice:.4f}")
+        axes[1].axis('off')
+        
+        # Plot CA-RFA model
+        axes[2].imshow(ca_rfa_image)
+        ca_rfa_contours, _ = cv2.findContours(ca_rfa_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ca_rfa_filled = np.zeros_like(ca_rfa_image)
+        cv2.drawContours(ca_rfa_filled, ca_rfa_contours, -1, overlay_color, thickness=cv2.FILLED)
+        axes[2].imshow(ca_rfa_filled, alpha=alpha_value)
+        axes[2].set_title(f"CA-RFA Model\nIoU: {ca_rfa_iou:.4f}\nDice: {ca_rfa_dice:.4f}")
+        axes[2].axis('off')
+        
+        plt.tight_layout()
+        
+        # Save plot
+        plot_filename = os.path.join(output_folder, 'plots', f'batch_comparison_{i+1}.png')
+        plt.savefig(plot_filename, bbox_inches='tight', dpi=300)
+        plt.close()
+        
+        # Append results to CSV
+        with open(csv_filename, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([
+                processed_images[i],
+                ca_iou, ca_dice,
+                ca_rfa_iou, ca_rfa_dice
+            ])
+        
+        print(f"Processed image set {i+1}")
+    
+    # After batch processing, call the difference analysis
+    difference_results = compute_model_differences(processed_folder, ca_folder, ca_rfa_folder, output_folder)
+    
+    print(f"Batch comparison complete. Results saved in {output_folder}")
+    return difference_results
+
+# Example usage
+if __name__ == "__main__":
+    # Paths to your specific folders
+    processed_folder = "./images_processed_typhoon"
+    ca_folder = "./images_Reg_CA_model"
+    ca_rfa_folder = "./images_Hybrid_Model"
+    
+    # Run batch comparison and get difference analysis
+    difference_analysis = batch_compare_models(processed_folder, ca_folder, ca_rfa_folder)
