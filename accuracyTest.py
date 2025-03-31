@@ -146,8 +146,8 @@ def batch_compare_models(processed_folder, ca_folder, ca_rfa_folder, output_fold
 # Example usage
 if __name__ == "__main__":
     processed_folder = "./images_processed_typhoon"
-    ca_folder = "./images_Reg_CA_model"
-    ca_rfa_folder = "./images_Hybrid_Model"
+    ca_folder = "./images_Hybrid_Model" 
+    ca_rfa_folder = "./images_Reg_CA_model"
     
     # Run batch comparison
     batch_comparison_results = batch_compare_models(processed_folder, ca_folder, ca_rfa_folder)
